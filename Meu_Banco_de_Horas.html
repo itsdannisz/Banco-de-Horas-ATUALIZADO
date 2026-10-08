@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Banco de Horas + Relatório</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f1ff;--card:#fff;--tx:#1f1b3a;--mut:#7a7699;--pri:#6d4aff;--pri2:#a78bfa;--pos:#12a36b;--neg:#e5484d;--line:#ece8fb}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15122b;--card:#201c3d;--tx:#f1eeff;--mut:#9d98c4;--line:#2f2a55}}
+:root[data-theme="dark"]{--bg:#15122b;--card:#201c3d;--tx:#f1eeff;--mut:#9d98c4;--line:#2f2a55}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 16px}
+.tabs{display:flex;gap:8px;margin:0 0 14px}
+.tabs button{flex:1;border:0;cursor:pointer;font:inherit;font-weight:700;border-radius:12px;padding:12px;background:var(--card);color:var(--mut)}
+.tabs button.on{background:var(--pri);color:#fff}
+.hero{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;border-radius:22px;padding:24px;box-shadow:0 12px 30px rgba(109,74,255,.3)}
+.hero small{opacity:.85;font-size:13px}
+.big{font-size:44px;font-weight:800;margin:4px 0 14px;letter-spacing:-1px}
+.btn{border:0;cursor:pointer;font:inherit;font-weight:700;border-radius:14px;padding:14px 18px}
+.fin{width:100%;background:#fff;color:var(--pri);font-size:17px}
+.fin:active{transform:scale(.98)}
+.row{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+.card{background:var(--card);border-radius:18px;padding:18px;margin-top:14px;box-shadow:0 2px 12px rgba(80,60,160,.08)}
+.card h2{font-size:15px;margin:0 0 12px}
+.stat{flex:1;min-width:140px}
+.stat b{display:block;font-size:22px}.stat span{font-size:12px;color:var(--mut)}
+label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--tx)}
+textarea{min-height:70px;resize:vertical}
+.f{margin-bottom:10px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;align-items:end}
+.b2{background:var(--pri);color:#fff;padding:11px 14px}
+.b3{background:var(--neg);color:#fff;padding:11px 14px}
+.b4{background:var(--line);color:var(--tx);padding:11px 14px}
+.sc{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--mut);padding:8px;border-bottom:2px solid var(--line)}
+td{padding:10px 8px;border-bottom:1px solid var(--line)}
+tr:nth-child(even) td{background:rgba(109,74,255,.04)}
+.pos{color:var(--pos);font-weight:700}.neg{color:var(--neg);font-weight:700}
+.tag{font-size:11px;padding:3px 8px;border-radius:99px;background:var(--line)}
+.x{background:none;border:0;color:var(--mut);cursor:pointer;font-size:16px}
+small.h{color:var(--mut);font-size:12px;display:block;margin-top:6px}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);padding:14px;border-radius:12px;font:13px/1.55 ui-monospace,Menlo,monospace;margin:0}
+#t{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#1f1b3a;color:#fff;padding:12px 18px;border-radius:12px;opacity:0;transition:.3s;pointer-events:none;font-size:14px;z-index:9}
+#t.on{opacity:1}
+</style></head><body><div class="w">
+<h1>⏱️ Banco de Horas + 📝 Relatório</h1>
+<div id="sy" style="font-size:12px;color:var(--mut);margin:-10px 0 14px">Salvo neste navegador</div>
+<div class="tabs"><button data-v="1" class="on">⏱️ Banco de horas</button><button data-v="2">📝 Relatório</button></div>
+
+<div id="v1">
+<div class="hero">
+  <small>Saldo atual</small>
+  <div class="big" id="saldo">0h00</div>
+  <button class="btn fin" id="fin">✅ Finalizar dia e salvar</button>
+</div>
+<div class="row">
+  <div class="card stat"><span>Total acumulado</span><b class="pos" id="s1"></b></div>
+  <div class="card stat"><span>Total usado</span><b class="neg" id="s2"></b></div>
+  <div class="card stat"><span>Dias registrados</span><b id="s3"></b></div>
+</div>
+<div class="card"><h2>⚙️ Horário de saída normal</h2>
+  <div class="g"><div><label>Saio normalmente às</label><input type="time" id="cfg"></div></div>
+</div>
+<div class="card"><h2>➕ Registrar dia manualmente (esqueci de clicar)</h2>
+  <div class="g"><div><label>Data</label><input type="date" id="md"></div>
+  <div><label>Hora que saí</label><input type="time" id="mh"></div>
+  <button class="btn b2" id="madd">Adicionar</button></div>
+</div>
+<div class="card"><h2>🏖️ Usar banco de horas (falta, saída antecipada...)</h2>
+  <div class="g"><div><label>Data</label><input type="date" id="ud"></div>
+  <div><label>Horas</label><input type="number" id="uh" min="0" value="0"></div>
+  <div><label>Minutos</label><input type="number" id="um" min="0" max="59" value="0"></div>
+  <div><label>Motivo</label><input id="un" placeholder="Ex: falta"></div>
+  <button class="btn b3" id="uadd">Descontar</button></div>
+</div>
+<div class="card"><h2>📋 Histórico</h2>
+  <div class="sc"><table><thead><tr><th>Data</th><th>Dia</th><th>Tipo</th><th>Saída</th><th>Variação</th><th>Saldo</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+  <div class="row"><button class="btn b4" id="cp">📲 Copiar resumo p/ WhatsApp</button></div>
+</div>
+</div>
+
+<div id="v2" hidden>
+<div class="card" style="margin-top:0"><h2>📊 1) Importar desempenho do Meta</h2>
+  <input type="file" id="mf" accept=".csv,.txt"><small class="h">No Gerenciador de Anúncios: Exportar → <b>CSV</b>. Preenche campanhas, desempenho e leads sozinho.</small></div>
+<div class="card"><h2>✍️ 2) Anotações soltas (pode escrever bagunçado)</h2>
+  <textarea id="nt" style="min-height:110px" placeholder="Ex: fiz 2 stories e 1 reels do empreendimento X&#10;12 leads hoje&#10;falta aprovar a arte do carrossel&#10;amanhã subir campanha nova"></textarea>
+  <div class="row"><button class="btn b2" id="og">✨ Organizar anotações</button></div><small class="h">Uma ideia por linha (ou separe com ;). Eu distribuo nos campos abaixo.</small></div>
+<div class="card"><h2>📝 3) Relatório diário — Marketing</h2>
+  <div class="g" style="margin-bottom:10px"><div><label>Data</label><input type="date" id="rd"></div><div><label>Relatórios salvos</label><select id="hs"></select></div></div>
+  <div id="rf"></div>
+  <div class="row"><button class="btn b2" id="rc">📋 Copiar relatório</button><button class="btn b4" id="rn">➕ Novo (hoje)</button><button class="btn b3" id="rx">🗑 Excluir este</button></div>
+</div>
+<div class="card"><h2>👀 Prévia (é isso que vai ser copiado)</h2><pre id="pv"></pre></div>
+</div>
+<div class="card"><h2>💾 Dados e sincronização</h2>
+  <div class="row" style="margin-top:0"><button class="btn b4" id="lk">🔗 Vincular arquivo (Drive)</button><button class="btn b4" id="bk">⬇️ Baixar backup</button><button class="btn b4" id="ld">⬆️ Carregar backup</button></div>
+  <div class="g" style="margin-top:12px"><div><label>Link do Apps Script (nuvem)</label><input id="cu" placeholder="https://script.google.com/macros/s/.../exec"></div><div><label>Senha</label><input id="ck" type="password"></div><button class="btn b2" id="cc">☁️ Conectar</button></div><small class="h" id="cs"></small>
+  <input type="file" id="lf" accept=".json" hidden>
+  <small class="h" id="ls"></small></div>
+</div><div id="t"></div>
+<script>
+const hoje=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const agora=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const tm=s=>{const[a,b]=s.split(':').map(Number);return a*60+b};
+const fm=(m,sg)=>{const s=m<0?'-':(sg&&m>0?'+':'');m=Math.abs(m);return s+Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')};
+const br=d=>d.split('-').reverse().join('/');
+const dow=d=>{const[y,m,x]=d.split('-').map(Number);return['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(y,m-1,x).getDay()]};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=i=>document.getElementById(i);
+
+/* ---- estrutura do relatório (igual ao modelo .docx) ---- */
+const DEF={s1:'Interações, mensagens e comentários respondidos.'};
+const SEC=[
+ {t:'CAMPANHAS',f:[['c1','Campanhas','Nome 1, Nome 2 e Nome 3'],['c2','Status & Desempenho','Ativas e com bom alcance / Ajustes necessários'],['c3','Leads (quantos novos)','Ex: 12','n'],['c4','Próximos Passos','Breve ação ou ajuste']]},
+ {t:'REDES SOCIAIS & CONTEÚDOS',f:[['s1','Monitoramento',''],['s2','Produzido Hoje','1 Carrossel, 2 Stories e copy da postagem X'],['s3','Destaque','Bom engajamento no último Reels']]},
+ {t:'EXTRAS',f:[['x1','Atividades extras (uma por linha)','Atividade extra ou demanda pontual','a']]},
+ {t:'EM ANDAMENTO & PENDÊNCIAS',f:[['a1','Em andamento','Atividade (Próximo passo: ...)'],['a2','Pendências','Pendência 1 / Pendência 2']]},
+ {t:'INSIGHTS & SUGESTÕES',f:[['i1','Ponto Forte','O que funcionou bem hoje'],['i2','Sugestão','Ideia rápida de conteúdo ou melhoria']]},
+ {t:'PLANEJAMENTO P/ AMANHÃ',f:[['p1','Atividades (uma por linha)','Atividade 1','a']]}
+];
+$('rf').innerHTML=SEC.map(s=>`<h2 style="font-size:13px;color:var(--pri);margin:16px 0 8px">${esc(s.t)}</h2>`+s.f.map(([k,l,p,ty])=>`<div class="f"><label>${esc(l)}</label>${ty==='a'?`<textarea data-k="${k}" placeholder="${esc(p)}"></textarea>`:`<input data-k="${k}" ${ty==='n'?'inputmode="numeric"':''} placeholder="${esc(p)}">`}</div>`).join('')).join('');
+
+const K='bhLocal.v2';
+let st={saida:'18:00',e:[{d:'2026-10-06',t:'extra',s:'',m:17,n:''}],rs:{},cd:hoje(),t:0};
+try{const r=JSON.parse(localStorage.getItem(K)||localStorage.getItem('bancoHoras.v1')||'null');if(r)st={...st,...r};if(!st.rs)st.rs={}}catch(e){}
+st.cd=hoje();
+let fh=null,tmr;
+const idb=(m,v)=>new Promise(r=>{try{const q=indexedDB.open('bh',1);q.onupgradeneeded=()=>q.result.createObjectStore('h');q.onsuccess=()=>{const o=q.result.transaction('h',m==='get'?'readonly':'readwrite').objectStore('h');const x=m==='get'?o.get('f'):o.put(v,'f');x.onsuccess=()=>r(x.result);x.onerror=()=>r()};q.onerror=()=>r()}catch(e){r()}});
+const ok=async(h,rw)=>{try{const o={mode:rw?'readwrite':'read'};return(await h.queryPermission(o))==='granted'}catch(e){return false}};
+async function push(){if(!fh||!await ok(fh,1))return;try{const w=await fh.createWritable();await w.write(JSON.stringify(st));await w.close();$('ls').textContent='🔗 Arquivo atualizado às '+agora()}catch(e){$('ls').textContent='⚠️ Não consegui gravar no arquivo'}}
+async function pull(){if(!fh||!await ok(fh))return;try{const r=JSON.parse(await(await fh.getFile()).text());if((r.t||0)>(st.t||0)){st={...st,...r,cd:hoje()};if(!st.rs)st.rs={};try{localStorage.setItem(K,JSON.stringify(st))}catch(e){};render();toast('Dados atualizados do arquivo')}else if((r.t||0)<(st.t||0))push()}catch(e){}}
+let nc=false,cu='',ck='';try{cu=localStorage.getItem(K+'.url')||'';ck=localStorage.getItem(K+'.key')||''}catch(e){}
+const save=()=>{st.t=Date.now();try{localStorage.setItem(K,JSON.stringify(st))}catch(e){}push();if(!nc)cpush()};
+function adopt(r){st={...st,...r,cd:hoje()};if(!st.rs)st.rs={};try{localStorage.setItem(K,JSON.stringify(st))}catch(e){};render()}
+async function cpull(){if(!cu)return;try{const r=await(await fetch(cu+'?k='+encodeURIComponent(ck))).json();
+  if(r.erro){$('cs').textContent='⚠️ Senha incorreta';return}
+  if((r.t||0)>(st.t||0)){adopt(r);toast('Dados atualizados da nuvem')}else if((r.t||0)<(st.t||0))await cpush();
+  $('cs').textContent='☁️ Nuvem conectada ('+agora()+')'}catch(e){$('cs').textContent='⚠️ Sem conexão com a nuvem'}}
+async function cpush(){if(!cu)return false;try{const r=await(await fetch(cu,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({k:ck,d:st})})).json();
+  if(r.ok){$('cs').textContent='☁️ Salvo no Drive às '+agora();return true}$('cs').textContent='⚠️ Senha incorreta'}catch(e){$('cs').textContent='⚠️ Não consegui salvar na nuvem'}return false}
+const later=()=>{clearTimeout(tmr);tmr=setTimeout(save,600)};
+addEventListener('focus',()=>{pull();cpull()});
+async function conectar(){
+  if(!window.showSaveFilePicker)return toast('Use Chrome ou Edge no computador');
+  try{
+    if(fh&&!await ok(fh,1)){if(await fh.requestPermission({mode:'readwrite'})==='granted'){await pull();await push();$('lk').textContent='🔗 Arquivo vinculado';return}}
+    const ex=confirm('Já existe o arquivo de dados no Drive?\nOK = escolher o existente\nCancelar = criar um novo');
+    const o={types:[{accept:{'application/json':['.json']}}]};
+    fh=ex?(await showOpenFilePicker(o))[0]:await showSaveFilePicker({...o,suggestedName:'banco-de-horas-dados.json'});
+    await idb('put',fh);
+    if(ex){const r=JSON.parse(await(await fh.getFile()).text());if((r.t||0)>(st.t||0)){st={...st,...r,cd:hoje()};if(!st.rs)st.rs={};try{localStorage.setItem(K,JSON.stringify(st))}catch(e){};render()}}
+    await push();$('lk').textContent='🔗 Arquivo vinculado';toast('Vinculado!');
+  }catch(e){}
+}
+function toast(x){const t=$('t');t.textContent=x;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200)}
+function addExtra(d,s){
+  const m=tm(s)-tm(st.saida);
+  st.e=st.e.filter(x=>!(x.d===d&&x.t==='extra'));
+  st.e.push({d,t:'extra',s,m,n:''});save();render();
+  toast('Dia '+br(d)+' salvo: '+fm(m,true));
+}
+
+/* ---- relatório ---- */
+const R=()=>(st.rs[st.cd]||{f:{...DEF}}).f;
+const W=()=>(st.rs[st.cd]||(st.rs[st.cd]={f:{...DEF}})).f;
+function add(k,x,area){const f=W();f[k]=(f[k]?f[k]+(area?'\n':'; '):'')+x}
+function build(){
+  const v=R(),L=['*RELATÓRIO DIÁRIO — MARKETING*','','*Data:* '+br(st.cd),''];
+  SEC.forEach(s=>{const o=[];
+    s.f.forEach(([k,l,,ty])=>{const x=(v[k]||'').trim();if(!x)return;
+      if(ty==='a')x.split('\n').map(z=>z.trim().replace(/^[-•]\s*/,'')).filter(Boolean).forEach(z=>o.push((k==='p1'?'- ':'• ')+z));
+      else if(k==='c3')o.push('• Leads: '+x+' novos leads recebidos e conferidos.');
+      else o.push('• '+l+': '+x)});
+    if(o.length)L.push('*'+s.t+'*',...o,'')});
+  return L.join('\n').trim();
+}
+function renderR(){
+  const set=(el,v)=>{if(document.activeElement!==el&&el.value!==v)el.value=v};
+  set($('rd'),st.cd);const f=R();
+  document.querySelectorAll('[data-k]').forEach(el=>set(el,f[el.dataset.k]||''));
+  const ds=[...new Set([...Object.keys(st.rs),st.cd])].sort().reverse();
+  $('hs').innerHTML=ds.map(d=>`<option value="${d}" ${d===st.cd?'selected':''}>${br(d)}${st.rs[d]?'':' (novo)'}</option>`).join('');
+  $('pv').textContent=build();
+}
+$('rf').oninput=e=>{const k=e.target.dataset.k;if(!k)return;W()[k]=e.target.value;$('pv').textContent=build();later()};
+$('rd').onchange=e=>{if(e.target.value){st.cd=e.target.value;renderR()}};
+$('hs').onchange=e=>{st.cd=e.target.value;renderR()};
+$('rn').onclick=()=>{st.cd=hoje();renderR()};
+$('rx').onclick=()=>{if(!st.rs[st.cd])return toast('Nada para excluir');if(!confirm('Excluir o relatório de '+br(st.cd)+'?'))return;delete st.rs[st.cd];st.cd=hoje();save();renderR();toast('Relatório excluído')};
+$('rc').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(build()):Promise.reject()).then(()=>toast('Relatório copiado!')).catch(()=>toast('Selecione e copie a prévia'))};
+
+/* organizador local de anotações (por palavras-chave) */
+const N=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+$('og').onclick=()=>{
+  const ls=$('nt').value.split(/[\n;]+/).map(z=>z.trim()).filter(Boolean);if(!ls.length)return toast('Escreva algo primeiro');
+  ls.forEach(l=>{const n=N(l),t=l[0].toUpperCase()+l.slice(1).replace(/\.$/,'');let m;
+    if(/amanha|proximo dia/.test(n))add('p1',t,1);
+    else if(/pendente|pendencia|falta |aguardando|esperando|depende/.test(n))add('a2',t);
+    else if(/sugest|ideia|seria legal|poderiamos/.test(n))add('i2',t);
+    else if(/andamento|estou fazendo|to fazendo|ainda to|continuar/.test(n))add('a1',t);
+    else if(/destaque|bombou|viralizou|engaj/.test(n))add('s3',t);
+    else if(/funcionou|deu certo|ponto forte/.test(n))add('i1',t);
+    else if(/story|stories|reels|carrossel|post|copy|arte|legenda|video|criei|produzi|editei|canva|capcut|roteiro/.test(n))add('s2',t);
+    else if(/lead/.test(n)&&(m=n.match(/(\d+)/)))W().c3=m[1];
+    else if(/campanha|anuncio|meta|ads|verba|orcamento|publico|criativo|otimiz|ajust|lead/.test(n))/ajust|otimiz|trocar|pausar|subir|escalar|aumentar|reduzir/.test(n)?add('c4',t):add('c2',t);
+    else add('x1',t,1)});
+  $('nt').value='';save();renderR();toast('Organizado! Dá uma conferida ✅');
+};
+
+/* importar CSV do Meta */
+function csv(t){const h=t.split('\n')[0],d=h.split(';').length>h.split(',').length?';':',',r=[];let w=[],c='',q=false;
+  for(let i=0;i<t.length;i++){const x=t[i];if(q){if(x=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=x}else if(x=='"')q=true;else if(x==d){w.push(c);c=''}else if(x=='\n'||x=='\r'){if(x=='\r'&&t[i+1]=='\n')i++;w.push(c);r.push(w);w=[];c=''}else c+=x}
+  if(c||w.length){w.push(c);r.push(w)}return r.filter(z=>z.some(y=>y.trim()))}
+const num=v=>{v=(v||'').replace(/[^\d.,-]/g,'');if(v.includes(',')&&v.includes('.'))v=v.replace(/\./g,'').replace(',','.');else v=v.replace(',','.');return parseFloat(v)};
+$('mf').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  const rows=csv((await f.text()).replace(/^\uFEFF/,''));const H=rows[0].map(N);
+  const ix=re=>H.findIndex(h=>re.test(h)),i={n:ix(/nome da campanha|campaign name/),r:ix(/^resultados|^results/),a:ix(/alcance|reach/),g:ix(/valor usado|amount spent|gasto/),c:ix(/custo por resultado|cost per result/)};
+  if(i.n<0)return toast('Não achei a coluna "Nome da campanha"');
+  const D=rows.slice(1).filter(z=>z[i.n]&&z[i.n].trim()),nm=[],st2=[];let L=0;
+  D.forEach(z=>{nm.push(z[i.n].trim());const p=[];
+    if(i.a>=0&&z[i.a])p.push('alcance '+z[i.a]);if(i.r>=0&&z[i.r]){p.push(z[i.r]+' resultados');const q=num(z[i.r]);if(q>0)L+=q}
+    if(i.g>=0&&z[i.g])p.push('investido R$ '+z[i.g]);if(i.c>=0&&z[i.c])p.push('custo/resultado R$ '+z[i.c]);
+    st2.push(z[i.n].trim()+': '+(p.join(', ')||'sem dados'))});
+  const F=W();F.c1=nm.join(', ');F.c2=st2.join(' / ');if(L)F.c3=String(L);
+  save();renderR();toast(D.length+' campanhas importadas — confira os leads');e.target.value=''};
+
+/* backup */
+$('lk').onclick=conectar;
+$('bk').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(st)],{type:'application/json'}));a.download='banco-de-horas-backup-'+hoje()+'.json';a.click()};
+$('ld').onclick=()=>$('lf').click();
+$('lf').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const r=JSON.parse(await f.text());if(!r.e)throw 0;if(!confirm('Substituir os dados deste navegador pelo backup?'))return;st={...st,...r,cd:hoje()};if(!st.rs)st.rs={};save();render();toast('Backup carregado')}catch(x){toast('Arquivo inválido')}e.target.value=''};
+
+/* ---- abas ---- */
+function tab(v){$('v1').hidden=v!=='1';$('v2').hidden=v!=='2';document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));try{localStorage.setItem(K+'.tab',v)}catch(e){}}
+document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button');if(b)tab(b.dataset.v)};
+
+function render(){
+  st.e.sort((a,b)=>a.d.localeCompare(b.d));
+  let acc=0,pos=0,neg=0;
+  $('tb').innerHTML=st.e.map((x,i)=>{acc+=x.m;x.m>0?pos+=x.m:neg+=x.m;
+    return `<tr><td>${br(x.d)}</td><td>${dow(x.d)}</td><td><span class="tag">${x.t==='extra'?'Hora extra':'Uso'+(x.n?': '+esc(x.n):'')}</span></td><td>${x.s||'—'}</td><td class="${x.m>=0?'pos':'neg'}">${fm(x.m,true)}</td><td><b>${fm(acc)}</b></td><td><button class="x" data-i="${i}" title="Apagar">🗑</button></td></tr>`}).reverse().join('')||'<tr><td colspan="7">Nada ainda</td></tr>';
+  $('saldo').textContent=fm(acc);
+  $('s1').textContent=fm(pos);$('s2').textContent=fm(Math.abs(neg));$('s3').textContent=st.e.filter(x=>x.t==='extra').length;
+  $('cfg').value=st.saida;
+  renderR();
+}
+$('fin').onclick=async()=>{nc=true;addExtra(hoje(),agora());nc=false;if(cu){const ok=await cpush();toast(ok?'☁️ Dia salvo no Drive!':'⚠️ Salvo aqui, mas não foi pra nuvem')}};
+$('cu').value=cu;$('ck').value=ck;
+$('cc').onclick=()=>{cu=$('cu').value.trim();ck=$('ck').value;try{localStorage.setItem(K+'.url',cu);localStorage.setItem(K+'.key',ck)}catch(e){}cpull()};
+$('madd').onclick=()=>{if(!$('md').value||!$('mh').value)return toast('Preenche data e hora');addExtra($('md').value,$('mh').value)};
+$('uadd').onclick=()=>{
+  const m=(+$('uh').value||0)*60+(+$('um').value||0);
+  if(!$('ud').value||m<=0)return toast('Preenche data e tempo');
+  st.e.push({d:$('ud').value,t:'uso',s:'',m:-m,n:$('un').value.trim()});save();render();toast('Descontado '+fm(m));
+};
+$('cfg').onchange=e=>{if(e.target.value){st.saida=e.target.value;save();toast('Horário normal: '+st.saida)}};
+$('tb').onclick=e=>{const b=e.target.closest('.x');if(!b)return;st.e.splice(+b.dataset.i,1);save();render()};
+$('cp').onclick=()=>{
+  const s=st.e.reduce((a,x)=>a+x.m,0),u=st.e[st.e.length-1];
+  const txt=`⏱️ Banco de horas\nÚltimo registro: ${u?br(u.d)+' ('+fm(u.m,true)+')':'-'}\nSaldo atual: ${fm(s)}`;
+  (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('Copiado!')).catch(()=>toast(txt));
+};
+$('md').value=$('ud').value=hoje();$('mh').value=agora();
+try{tab(localStorage.getItem(K+'.tab')||'1')}catch(e){}
+render();cpull();(async()=>{fh=await idb('get');if(fh){$('lk').textContent='🔗 Reconectar arquivo';if(await ok(fh,1)){$('lk').textContent='🔗 Arquivo vinculado';pull()}}})();
+</script></body></html>
